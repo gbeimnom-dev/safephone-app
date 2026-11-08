@@ -81,8 +81,9 @@ h2{font-size:1.25rem;margin:0 0 12px}
     <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" placeholder="At least 6 characters">
     <p class="err" id="aE" role="alert"></p>
     <button class="btn" id="aB" type="button" style="width:100%;margin-top:6px">Sign in</button>
-    <p class="sub" style="margin-top:14px;text-align:center"><button class="link" id="aT" type="button"></button></p>
-    <p class="demo">Design preview: this version keeps your data on this device only. The real app will send it to a secure online database.</p>
+    <p class="sub" style="margin:8px 0 0;text-align:center"><button class="link" id="fg" type="button">Forgot password?</button></p>
+    <p class="sub" style="margin-top:10px;text-align:center"><button class="link" id="aT" type="button"></button></p>
+    <p class="demo">Your contacts and calls are saved to your account, so you can open them from any phone or computer after you sign in.</p>
   </div>
 </div>
 
@@ -163,49 +164,87 @@ h2{font-size:1.25rem;margin:0 0 12px}
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
 
-<script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyCha6I2Cs-oaueNqlU2iQMTciBJjt0AIFI",authDomain:"safephone-backup.firebaseapp.com",projectId:"safephone-backup"});
+const auth=getAuth(app),db=getFirestore(app);
 (function(){
-  var KEY="safephone-v1";
-  var S={acct:null,contacts:[],calls:[],last:0};
+  var S={contacts:[],calls:[],last:0},user=null,timer=0;
   var $=function(i){return document.getElementById(i);};
-  var mem={};
-  try{var r=JSON.parse(localStorage.getItem(KEY));if(r&&typeof r==="object")S=Object.assign(S,r);}catch(e){}
-  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){mem=S;}}
-  function sha(s){return crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)).then(function(d){return Array.from(new Uint8Array(d)).map(function(x){return x.toString(16).padStart(2,"0");}).join("");});}
+  function dref(n){return doc(db,"users",user.uid,"data",n);}
+  function push(){if(!user)return;clearTimeout(timer);timer=setTimeout(pushNow,400);}
+  async function pushNow(){
+    if(!user)return;
+    try{await Promise.all([setDoc(dref("contacts"),{list:S.contacts}),setDoc(dref("calls"),{list:S.calls}),setDoc(dref("meta"),{last:S.last})]);}
+    catch(e){toast("Could not save. Check your connection.");}
+  }
+  function save(){push();}
+  async function loadData(){
+    try{
+      var r=await Promise.all([getDoc(dref("contacts")),getDoc(dref("calls")),getDoc(dref("meta"))]);
+      S.contacts=r[0].exists()?r[0].data().list||[]:[];
+      S.calls=r[1].exists()?r[1].data().list||[]:[];
+      S.last=r[2].exists()?r[2].data().last||0:0;
+    }catch(e){toast("Could not load your data");}
+  }
   function toast(t){var e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true;},2400);}
   function h(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
   function hue(s){var n=0;for(var i=0;i<s.length;i++)n=(n*31+s.charCodeAt(i))|0;return Math.abs(n)%360;}
   function ago(ms){var d=Math.round((Date.now()-ms)/60000);if(d<1)return "Just now";if(d<60)return d+" min ago";if(d<1440)return Math.round(d/60)+" h ago";return new Date(ms).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});}
 
-  /* ---------- sign in ---------- */
-  var mode=S.acct?"in":"up";
+  /* ---------- sign in (Firebase) ---------- */
+  var mode="in";
   function authUI(){
     var up=mode==="up";
     $("aH").textContent=up?"Create your account":"Welcome back";
     $("aS").textContent=up?"One account keeps your contacts and calls safe.":"Sign in to see your saved contacts and calls.";
     $("aB").textContent=up?"Create account":"Sign in";
-    $("aT").textContent=S.acct?(up?"I already have an account":"Create a new account instead"):"";
-    $("aT").hidden=!S.acct;$("aE").textContent="";
+    $("aT").textContent=up?"I already have an account":"Create a new account";
+    $("fg").hidden=up;$("aE").textContent="";
     $("pw").autocomplete=up?"new-password":"current-password";
+  }
+  function msg(e){
+    var c=(e&&e.code)||"";
+    if(c==="auth/email-already-in-use")return "That email already has an account. Sign in instead.";
+    if(c==="auth/invalid-credential"||c==="auth/wrong-password"||c==="auth/user-not-found")return "Email or password is not right.";
+    if(c==="auth/weak-password")return "Use a password of at least 6 characters.";
+    if(c==="auth/network-request-failed")return "No internet connection. Try again.";
+    if(c==="auth/too-many-requests")return "Too many tries. Wait a few minutes and try again.";
+    if(c==="auth/unauthorized-domain")return "This website address is not allowed yet in the Firebase settings.";
+    return "Something went wrong. Please try again.";
   }
   $("aT").addEventListener("click",function(){mode=mode==="up"?"in":"up";authUI();});
   $("aB").addEventListener("click",async function(){
     var em=$("em").value.trim().toLowerCase(),pw=$("pw").value;
     if(!/^\S+@\S+\.\S+$/.test(em)){$("aE").textContent="Enter a valid email address.";return;}
     if(pw.length<6){$("aE").textContent="Use a password of at least 6 characters.";return;}
-    if(!window.crypto||!crypto.subtle){$("aE").textContent="This page needs a secure (https) connection.";return;}
-    var hs=await sha(pw+em);
-    if(mode==="up"){
-      if(S.acct&&!confirm("This replaces the account and all data saved on this device. Continue?"))return;
-      S={acct:{e:em,h:hs},contacts:[],calls:[],last:0};save();
-    }else if(!S.acct||S.acct.e!==em||S.acct.h!==hs){$("aE").textContent="Email or password is not right.";return;}
-    try{sessionStorage.setItem("spb","1");}catch(e){}
-    $("pw").value="";open();
+    $("aB").disabled=true;$("aE").textContent="";
+    try{
+      if(mode==="up")await createUserWithEmailAndPassword(auth,em,pw);
+      else await signInWithEmailAndPassword(auth,em,pw);
+      $("pw").value="";
+    }catch(e){$("aE").textContent=msg(e);}
+    $("aB").disabled=false;
+  });
+  $("fg").addEventListener("click",async function(){
+    var em=$("em").value.trim().toLowerCase();
+    if(!/^\S+@\S+\.\S+$/.test(em)){$("aE").textContent="Type your email above first.";return;}
+    try{await sendPasswordResetEmail(auth,em);toast("Password reset email sent");}catch(e){$("aE").textContent=msg(e);}
   });
   $("em").addEventListener("keydown",function(e){if(e.key==="Enter")$("pw").focus();});
   $("pw").addEventListener("keydown",function(e){if(e.key==="Enter")$("aB").click();});
-  function open(){$("auth").hidden=true;$("app").hidden=false;$("whoE").textContent=S.acct.e;go2("home");}
-  $("out").addEventListener("click",function(){try{sessionStorage.removeItem("spb");}catch(e){}$("app").hidden=true;$("auth").hidden=false;mode="in";authUI();});
+  onAuthStateChanged(auth,async function(u){
+    if(u){
+      user=u;S={contacts:[],calls:[],last:0};await loadData();
+      $("whoE").textContent=u.email;$("auth").hidden=true;$("app").hidden=false;go2("home");
+    }else{
+      user=null;S={contacts:[],calls:[],last:0};
+      $("app").hidden=true;$("auth").hidden=false;mode="in";authUI();
+    }
+  });
+  $("out").addEventListener("click",function(){signOut(auth);});
 
   /* ---------- views ---------- */
   function go2(v){
@@ -257,7 +296,7 @@ h2{font-size:1.25rem;margin:0 0 12px}
   $("go").addEventListener("click",function(){
     var b=$("go"),p=0;b.disabled=true;b.textContent="Backing up\u2026";
     var t=setInterval(function(){p+=8;$("prog").style.width=Math.min(p,100)+"%";
-      if(p>=100){clearInterval(t);S.last=Date.now();save();b.disabled=false;b.textContent="Back up now";setTimeout(function(){$("prog").style.width="0";},500);draw();toast("Backup complete");}
+      if(p>=100){clearInterval(t);S.last=Date.now();pushNow();b.disabled=false;b.textContent="Back up now";setTimeout(function(){$("prog").style.width="0";},500);draw();toast("Backup complete");}
     },120);
   });
 
@@ -326,7 +365,6 @@ h2{font-size:1.25rem;margin:0 0 12px}
   });
 
   authUI();
-  try{if(S.acct&&sessionStorage.getItem("spb"))open();}catch(e){}
 })();
 </script>
 </body>
