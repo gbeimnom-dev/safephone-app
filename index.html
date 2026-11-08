@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SafePhone Backup</title>
+<meta name="description" content="Back up your contacts and call history, and see them from any browser.">
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f3f6fb;--surface:#fff;--text:#12202f;--muted:#5b6b7c;--line:#dde5ee;--pri:#1a56db;--pri-t:#fff;--soft:#e6eefc;--ok:#137a4b;--bad:#c0392b;color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1621;--surface:#162231;--text:#e8eff7;--muted:#9fb0c2;--line:#263a4f;--pri:#6ea0ff;--pri-t:#0b1a33;--soft:#1e3350;--ok:#5fd39b;--bad:#ff8a7a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1621;--surface:#162231;--text:#e8eff7;--muted:#9fb0c2;--line:#263a4f;--pri:#6ea0ff;--pri-t:#0b1a33;--soft:#1e3350;--ok:#5fd39b;--bad:#ff8a7a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+[hidden]{display:none!important}
+.btn{background:var(--pri);color:var(--pri-t);border:0;border-radius:999px;padding:10px 20px;font-weight:600;cursor:pointer}
+.btn.ghost{background:var(--soft);color:var(--pri)}
+.btn:disabled{opacity:.6;cursor:default}
+input,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+label{display:block;font-weight:600;margin:14px 0 6px;font-size:.92rem}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.15rem}
+.mark{width:36px;height:36px;border-radius:11px;background:var(--pri);color:var(--pri-t);display:grid;place-items:center;font-size:1.1rem}
+
+#auth{min-height:100dvh;display:grid;place-items:center;padding:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px}
+#auth .card{width:100%;max-width:400px;padding:28px}
+#auth h1{font-size:1.6rem;margin:18px 0 4px}
+.sub{color:var(--muted);margin:0 0 6px}
+.err{color:var(--bad);min-height:1.3em;margin:8px 0 0;font-size:.9rem}
+.link{background:none;border:0;color:var(--pri);cursor:pointer;padding:0;font-weight:600}
+.demo{font-size:.85rem;color:var(--muted);margin-top:16px;padding:10px 12px;background:var(--bg);border-radius:10px}
+
+.wrap{max-width:900px;margin:0 auto;padding:0 16px 40px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 0}
+.who{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.9rem}
+nav{display:flex;gap:6px;overflow-x:auto;padding:4px 0 14px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:3}
+nav button{border:0;background:none;color:var(--muted);padding:9px 16px;border-radius:999px;font-weight:600;cursor:pointer;white-space:nowrap}
+nav button[aria-current="page"]{background:var(--soft);color:var(--pri)}
+h2{font-size:1.25rem;margin:0 0 12px}
+
+.hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding:24px}
+.ring{--p:0;width:104px;height:104px;border-radius:50%;background:conic-gradient(var(--pri) calc(var(--p)*1%),var(--soft) 0);display:grid;place-items:center;flex:none}
+.ring i{width:80px;height:80px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:1.3rem}
+.hero h2{margin:0 0 2px}
+.chip{display:inline-block;padding:3px 12px;border-radius:99px;font-size:.85rem;font-weight:600;background:var(--soft);color:var(--pri)}
+.chip.ok{color:var(--ok)}
+.bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:12px}
+.bar b{display:block;height:100%;width:0;background:var(--pri);transition:width .2s}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:14px 0}
+.stat{padding:18px}.stat b{display:block;font-size:1.7rem;line-height:1.2}.stat span{color:var(--muted);font-size:.9rem}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.tools input[type=search]{flex:1 1 200px;border-radius:999px}
+.list{padding:6px 0;overflow:hidden}
+.row{display:flex;align-items:center;gap:14px;padding:11px 18px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.row .m{flex:1;min-width:0}.row .m b,.row .m span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .m span{color:var(--muted);font-size:.88rem}
+.x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:6px 10px;border-radius:8px}
+.in{color:var(--ok)}.out{color:var(--pri)}.miss{color:var(--bad)}
+.empty{padding:34px 20px;text-align:center;color:var(--muted)}
+.add{display:flex;gap:8px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--line)}
+.add input{flex:1 1 150px}
+.steps{margin:0;padding-left:20px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:600;z-index:9}
+</style>
+</head>
+<body>
+
+<div id="auth">
+  <div class="card">
+    <div class="logo"><span class="mark">&#9729;</span>SafePhone Backup</div>
+    <h1 id="aH">Welcome back</h1>
+    <p class="sub" id="aS">Sign in to see your saved contacts and calls.</p>
+    <label for="em">Email</label><input id="em" type="email" autocomplete="email" placeholder="you@example.com">
+    <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" placeholder="At least 6 characters">
+    <p class="err" id="aE" role="alert"></p>
+    <button class="btn" id="aB" type="button" style="width:100%;margin-top:6px">Sign in</button>
+    <p class="sub" style="margin-top:14px;text-align:center"><button class="link" id="aT" type="button"></button></p>
+    <p class="demo">Design preview: this version keeps your data on this device only. The real app will send it to a secure online database.</p>
+  </div>
+</div>
+
+<div id="app" hidden>
+<div class="wrap">
+  <header class="top">
+    <div class="logo"><span class="mark">&#9729;</span>SafePhone</div>
+    <div class="who"><span id="whoE"></span><button class="btn ghost" id="out" type="button">Sign out</button></div>
+  </header>
+  <nav id="nav" aria-label="Sections">
+    <button data-v="home" aria-current="page">Backup</button>
+    <button data-v="contacts">Contacts</button>
+    <button data-v="calls">Call history</button>
+    <button data-v="settings">Settings</button>
+  </nav>
+
+  <section id="v-home">
+    <div class="card hero">
+      <div class="ring" id="ring"><i id="ringT">0%</i></div>
+      <div style="flex:1;min-width:200px">
+        <span class="chip" id="stChip">Not backed up yet</span>
+        <h2 id="stH" style="margin-top:8px">Protect your phone data</h2>
+        <p class="sub" id="stS">Back up your contacts and call history so you can get them from any browser.</p>
+        <div class="bar"><b id="prog"></b></div>
+      </div>
+      <button class="btn" id="go" type="button">Back up now</button>
+    </div>
+    <div class="grid">
+      <div class="card stat"><b id="nC">0</b><span>Contacts saved</span></div>
+      <div class="card stat"><b id="nK">0</b><span>Calls saved</span></div>
+      <div class="card stat"><b id="nS">0 KB</b><span>Storage used</span></div>
+      <div class="card stat"><b id="nL" style="font-size:1.1rem;padding:6px 0">Never</b><span>Last backup</span></div>
+    </div>
+    <div class="card" style="padding:20px">
+      <h2>If your phone is lost</h2>
+      <ol class="steps"><li>Open this site on any phone or computer.</li><li>Sign in with your email and password.</li><li>Open Contacts and Call history to see everything you saved.</li><li>Sign out when you finish.</li></ol>
+    </div>
+  </section>
+
+  <section id="v-contacts" hidden>
+    <div class="tools">
+      <input type="search" id="qC" placeholder="Search contacts" aria-label="Search contacts">
+      <label class="btn ghost" style="margin:0;cursor:pointer">Import .vcf or .csv<input type="file" id="fC" accept=".vcf,.csv,text/vcard,text/csv" hidden></label>
+    </div>
+    <div class="card list">
+      <div class="add"><input id="cN" placeholder="Name" aria-label="Name"><input id="cP" placeholder="Phone number" aria-label="Phone number" inputmode="tel"><button class="btn" id="cA" type="button">Add</button></div>
+      <div id="lC"></div>
+    </div>
+  </section>
+
+  <section id="v-calls" hidden>
+    <div class="tools">
+      <input type="search" id="qK" placeholder="Search calls" aria-label="Search calls">
+      <label class="btn ghost" style="margin:0;cursor:pointer">Import .csv<input type="file" id="fK" accept=".csv,text/csv" hidden></label>
+    </div>
+    <div class="card list"><div id="lK"></div></div>
+    <p class="sub" style="margin-top:10px">CSV columns: name, number, type (incoming, outgoing, missed), date.</p>
+  </section>
+
+  <section id="v-settings" hidden>
+    <div class="card" style="padding:20px;margin-bottom:14px">
+      <h2>Sample data</h2>
+      <p class="sub">Fill the app with example contacts and calls to see how it looks.</p>
+      <button class="btn ghost" id="demo" type="button">Load sample data</button>
+    </div>
+    <div class="card" style="padding:20px;margin-bottom:14px">
+      <h2>Copy or restore a backup</h2>
+      <p class="sub">Copy your whole backup as text, or paste a backup here to restore it.</p>
+      <textarea id="ta" rows="4" aria-label="Backup text"></textarea>
+      <div class="tools" style="margin:10px 0 0"><button class="btn" id="cp" type="button">Copy backup</button><button class="btn ghost" id="rs" type="button">Restore from text</button></div>
+    </div>
+    <div class="card" style="padding:20px">
+      <h2>Display and data</h2>
+      <div class="tools" style="margin:0"><button class="btn ghost" id="th" type="button">Dark or light</button><button class="btn ghost" id="wipe" type="button" style="color:var(--bad)">Delete all saved data</button></div>
+    </div>
+  </section>
+</div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(function(){
+  var KEY="safephone-v1";
+  var S={acct:null,contacts:[],calls:[],last:0};
+  var $=function(i){return document.getElementById(i);};
+  var mem={};
+  try{var r=JSON.parse(localStorage.getItem(KEY));if(r&&typeof r==="object")S=Object.assign(S,r);}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){mem=S;}}
+  function sha(s){return crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)).then(function(d){return Array.from(new Uint8Array(d)).map(function(x){return x.toString(16).padStart(2,"0");}).join("");});}
+  function toast(t){var e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true;},2400);}
+  function h(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+  function hue(s){var n=0;for(var i=0;i<s.length;i++)n=(n*31+s.charCodeAt(i))|0;return Math.abs(n)%360;}
+  function ago(ms){var d=Math.round((Date.now()-ms)/60000);if(d<1)return "Just now";if(d<60)return d+" min ago";if(d<1440)return Math.round(d/60)+" h ago";return new Date(ms).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});}
+
+  /* ---------- sign in ---------- */
+  var mode=S.acct?"in":"up";
+  function authUI(){
+    var up=mode==="up";
+    $("aH").textContent=up?"Create your account":"Welcome back";
+    $("aS").textContent=up?"One account keeps your contacts and calls safe.":"Sign in to see your saved contacts and calls.";
+    $("aB").textContent=up?"Create account":"Sign in";
+    $("aT").textContent=S.acct?(up?"I already have an account":"Create a new account instead"):"";
+    $("aT").hidden=!S.acct;$("aE").textContent="";
+    $("pw").autocomplete=up?"new-password":"current-password";
+  }
+  $("aT").addEventListener("click",function(){mode=mode==="up"?"in":"up";authUI();});
+  $("aB").addEventListener("click",async function(){
+    var em=$("em").value.trim().toLowerCase(),pw=$("pw").value;
+    if(!/^\S+@\S+\.\S+$/.test(em)){$("aE").textContent="Enter a valid email address.";return;}
+    if(pw.length<6){$("aE").textContent="Use a password of at least 6 characters.";return;}
+    if(!window.crypto||!crypto.subtle){$("aE").textContent="This page needs a secure (https) connection.";return;}
+    var hs=await sha(pw+em);
+    if(mode==="up"){
+      if(S.acct&&!confirm("This replaces the account and all data saved on this device. Continue?"))return;
+      S={acct:{e:em,h:hs},contacts:[],calls:[],last:0};save();
+    }else if(!S.acct||S.acct.e!==em||S.acct.h!==hs){$("aE").textContent="Email or password is not right.";return;}
+    try{sessionStorage.setItem("spb","1");}catch(e){}
+    $("pw").value="";open();
+  });
+  $("em").addEventListener("keydown",function(e){if(e.key==="Enter")$("pw").focus();});
+  $("pw").addEventListener("keydown",function(e){if(e.key==="Enter")$("aB").click();});
+  function open(){$("auth").hidden=true;$("app").hidden=false;$("whoE").textContent=S.acct.e;go2("home");}
+  $("out").addEventListener("click",function(){try{sessionStorage.removeItem("spb");}catch(e){}$("app").hidden=true;$("auth").hidden=false;mode="in";authUI();});
+
+  /* ---------- views ---------- */
+  function go2(v){
+    ["home","contacts","calls","settings"].forEach(function(n){$("v-"+n).hidden=n!==v;});
+    Array.prototype.forEach.call($("nav").children,function(b){if(b.dataset.v===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");});
+    draw();
+  }
+  $("nav").addEventListener("click",function(e){var b=e.target.closest("button");if(b)go2(b.dataset.v);});
+
+  function draw(){
+    var size=Math.max(1,Math.round(JSON.stringify({c:S.contacts,k:S.calls}).length/1024));
+    $("nC").textContent=S.contacts.length;$("nK").textContent=S.calls.length;$("nS").textContent=size+" KB";
+    $("nL").textContent=S.last?ago(S.last):"Never";
+    var ok=S.last>0,p=ok?100:0;
+    $("ring").style.setProperty("--p",p);$("ringT").textContent=p+"%";
+    $("stChip").textContent=ok?"Backed up":"Not backed up yet";$("stChip").className="chip"+(ok?" ok":"");
+    $("stH").textContent=ok?"Your data is safe":"Protect your phone data";
+    $("stS").textContent=ok?"Last backup "+ago(S.last)+". Sign in from any browser to see it.":"Back up your contacts and call history so you can get them from any browser.";
+    drawC();drawK();
+  }
+  function drawC(){
+    var q=$("qC").value.trim().toLowerCase(),box=$("lC");box.innerHTML="";
+    var l=S.contacts.filter(function(c){return !q||(c.n+" "+c.p+" "+(c.e||"")).toLowerCase().indexOf(q)>-1;}).sort(function(a,b){return a.n.localeCompare(b.n);});
+    if(!l.length){box.appendChild(h("div","empty",S.contacts.length?"No contacts match your search.":"No contacts yet. Add one above, import a file, or load sample data in Settings."));return;}
+    l.forEach(function(c){
+      var r=h("div","row"),a=h("div","av",c.n.charAt(0).toUpperCase());a.style.background="hsl("+hue(c.n)+",50%,40%)";
+      var m=h("div","m");m.appendChild(h("b","",c.n));m.appendChild(h("span","",c.p||c.e||""));
+      var x=h("button","x","\u2715");x.setAttribute("aria-label","Delete "+c.n);
+      x.addEventListener("click",function(){S.contacts=S.contacts.filter(function(z){return z.id!==c.id;});save();draw();});
+      r.appendChild(a);r.appendChild(m);r.appendChild(x);box.appendChild(r);
+    });
+  }
+  function drawK(){
+    var q=$("qK").value.trim().toLowerCase(),box=$("lK");box.innerHTML="";
+    var l=S.calls.filter(function(c){return !q||(c.n+" "+c.p).toLowerCase().indexOf(q)>-1;}).sort(function(a,b){return b.d-a.d;});
+    if(!l.length){box.appendChild(h("div","empty",S.calls.length?"No calls match your search.":"No calls saved yet. Import a CSV file or load sample data in Settings."));return;}
+    var ic={in:"\u2199",out:"\u2197",miss:"\u2199"},lb={in:"Incoming",out:"Outgoing",miss:"Missed"};
+    l.forEach(function(c){
+      var r=h("div","row"),a=h("div","av "+c.t,ic[c.t]);a.style.background="var(--soft)";a.style.fontSize="1.2rem";
+      var m=h("div","m");m.appendChild(h("b",c.t==="miss"?"miss":"",c.n||c.p));m.appendChild(h("span","",lb[c.t]+" \u00b7 "+ago(c.d)+(c.s?" \u00b7 "+Math.floor(c.s/60)+"m "+(c.s%60)+"s":"")));
+      var x=h("button","x","\u2715");x.setAttribute("aria-label","Delete this call");
+      x.addEventListener("click",function(){S.calls=S.calls.filter(function(z){return z.id!==c.id;});save();draw();});
+      r.appendChild(a);r.appendChild(m);r.appendChild(x);box.appendChild(r);
+    });
+  }
+  $("qC").addEventListener("input",drawC);$("qK").addEventListener("input",drawK);
+
+  /* ---------- backup button ---------- */
+  $("go").addEventListener("click",function(){
+    var b=$("go"),p=0;b.disabled=true;b.textContent="Backing up\u2026";
+    var t=setInterval(function(){p+=8;$("prog").style.width=Math.min(p,100)+"%";
+      if(p>=100){clearInterval(t);S.last=Date.now();save();b.disabled=false;b.textContent="Back up now";setTimeout(function(){$("prog").style.width="0";},500);draw();toast("Backup complete");}
+    },120);
+  });
+
+  /* ---------- add and import ---------- */
+  var uid=function(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);};
+  $("cA").addEventListener("click",function(){
+    var n=$("cN").value.trim(),p=$("cP").value.trim();
+    if(!n){toast("Enter a name");return;}
+    S.contacts.push({id:uid(),n:n,p:p});$("cN").value="";$("cP").value="";save();draw();
+  });
+  function readFile(inp,fn){
+    var f=inp.files[0];if(!f)return;var r=new FileReader();
+    r.onload=function(){try{fn(String(r.result),f.name);}catch(e){toast("Could not read that file");}inp.value="";};r.readAsText(f);
+  }
+  function csv(t){return t.split(/\r?\n/).filter(function(x){return x.trim();}).map(function(l){return l.split(",").map(function(x){return x.replace(/^"|"$/g,"").trim();});});}
+  function col(h,re){for(var i=0;i<h.length;i++)if(re.test(h[i]))return i;return -1;}
+  $("fC").addEventListener("change",function(){readFile($("fC"),function(t,name){
+    var add=[];
+    if(/\.vcf$/i.test(name)||/BEGIN:VCARD/i.test(t)){
+      t.split(/BEGIN:VCARD/i).slice(1).forEach(function(b){
+        var n=(b.match(/^FN[^:]*:(.+)$/im)||[])[1],p=(b.match(/^TEL[^:]*:(.+)$/im)||[])[1],e=(b.match(/^EMAIL[^:]*:(.+)$/im)||[])[1];
+        if(n)add.push({id:uid(),n:n.trim(),p:(p||"").trim(),e:(e||"").trim()});
+      });
+    }else{
+      var rows=csv(t),hd=rows.shift().map(function(x){return x.toLowerCase();});
+      var iN=col(hd,/name/),iP=col(hd,/phone|number|tel/),iE=col(hd,/mail/);
+      rows.forEach(function(r){var n=r[iN<0?0:iN];if(n)add.push({id:uid(),n:n,p:iP<0?"":r[iP]||"",e:iE<0?"":r[iE]||""});});
+    }
+    S.contacts=S.contacts.concat(add);save();draw();toast(add.length+" contacts imported");
+  });});
+  $("fK").addEventListener("change",function(){readFile($("fK"),function(t){
+    var rows=csv(t),hd=rows.shift().map(function(x){return x.toLowerCase();});
+    var iN=col(hd,/name/),iP=col(hd,/number|phone|tel/),iT=col(hd,/type|dir/),iD=col(hd,/date|time/),iS=col(hd,/dur|sec/),add=[];
+    rows.forEach(function(r){
+      var ty=iT<0?"":r[iT]||"",tp=/miss/i.test(ty)?"miss":/out|dial/i.test(ty)?"out":"in";
+      var n=iN<0?"":r[iN]||"",p=iP<0?"":r[iP]||"";if(!n&&!p)return;
+      add.push({id:uid(),n:n,p:p,t:tp,d:(iD<0?0:Date.parse(r[iD]))||Date.now(),s:iS<0?0:parseInt(r[iS],10)||0});
+    });
+    S.calls=S.calls.concat(add);save();draw();toast(add.length+" calls imported");
+  });});
+
+  /* ---------- settings ---------- */
+  $("demo").addEventListener("click",function(){
+    var names=[["Ada Obi","0803 111 2233"],["Bala Musa","0701 456 7890"],["Chinedu Eze","0812 345 6789"],["Dorcas Yusuf","0906 222 3344"],["Emeka Nwosu","0805 987 6543"],["Fatima Bello","0802 654 3210"],["Grace Adamu","0814 777 8899"],["Hannah Jacob","0703 123 4567"]];
+    names.forEach(function(x){S.contacts.push({id:uid(),n:x[0],p:x[1]});});
+    var ty=["in","out","miss","out","in"],now=Date.now();
+    names.forEach(function(x,i){S.calls.push({id:uid(),n:x[0],p:x[1],t:ty[i%5],d:now-(i*5+2)*3600000,s:ty[i%5]==="miss"?0:30+i*47});});
+    save();draw();toast("Sample data loaded");
+  });
+  $("cp").addEventListener("click",function(){
+    var t=JSON.stringify({contacts:S.contacts,calls:S.calls});$("ta").value=t;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){toast("Backup copied");},function(){$("ta").select();toast("Select and copy the text");});
+  });
+  $("rs").addEventListener("click",function(){
+    try{var d=JSON.parse($("ta").value);if(!Array.isArray(d.contacts)||!Array.isArray(d.calls))throw 0;
+      S.contacts=d.contacts;S.calls=d.calls;S.last=Date.now();save();draw();toast("Backup restored");}
+    catch(e){toast("That text is not a valid backup");}
+  });
+  $("wipe").addEventListener("click",function(){
+    if(!confirm("Delete all contacts and calls saved here?"))return;
+    S.contacts=[];S.calls=[];S.last=0;save();draw();toast("All saved data deleted");
+  });
+  $("th").addEventListener("click",function(){
+    var r=document.documentElement,d=r.getAttribute("data-theme")==="dark"||(r.getAttribute("data-theme")!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);
+    r.setAttribute("data-theme",d?"light":"dark");
+  });
+
+  authUI();
+  try{if(S.acct&&sessionStorage.getItem("spb"))open();}catch(e){}
+})();
+</script>
+</body>
+</html>
