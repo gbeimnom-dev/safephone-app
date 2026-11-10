@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Live captions and translation test</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f3f6fb;--surface:#fff;--text:#12202f;--muted:#5b6b7c;--line:#dde5ee;--pri:#1a56db;--pri-t:#fff;--soft:#e6eefc;--bad:#c0392b;--fs:1.5rem;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1621;--surface:#162231;--text:#e8eff7;--muted:#9fb0c2;--line:#263a4f;--pri:#6ea0ff;--pri-t:#0b1a33;--soft:#1e3350;--bad:#ff8a7a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+main{max-width:820px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:1.4rem;margin:6px 0 4px}
+.sub{color:var(--muted);margin:0 0 14px;font-size:.95rem}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+select,input[type=text]{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+input[type=text]{flex:1 1 220px}
+.btn{background:var(--pri);color:var(--pri-t);border:0;border-radius:999px;padding:10px 20px;font-weight:600;cursor:pointer}
+.btn.ghost{background:var(--soft);color:var(--pri)}
+.btn.rec{background:var(--bad);color:#fff}
+.status{min-height:1.4em;font-size:.92rem;color:var(--muted)}
+.status.err{color:var(--bad)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;height:46vh;min-height:260px;overflow-y:auto;scroll-behavior:smooth}
+.line{margin:0 0 18px;opacity:.5;transition:opacity .3s}
+.line:last-of-type{opacity:1}
+.orig{color:var(--muted);font-size:.95rem}
+.tr{font-size:var(--fs);font-weight:700;line-height:1.3;margin-top:2px}
+.live{color:var(--muted);font-style:italic;min-height:1.5em;margin-top:6px}
+.empty{color:var(--muted);text-align:center;padding:50px 10px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:.9rem;color:var(--muted);margin-top:16px}
+label.s{font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>Live captions and translation test</h1>
+<p class="sub">Speak or type, and see what you said with its translation, like lyrics under a screen. This page is only a test.</p>
+
+<div class="row">
+  <label class="s" for="from">I speak</label>
+  <select id="from"><option value="en-NG">English (Nigeria)</option><option value="en-US">English (US)</option><option value="ha-NG">Hausa</option></select>
+  <button class="btn ghost" id="swap" type="button" aria-label="Swap languages">&#8644;</button>
+  <label class="s" for="to">Show in</label>
+  <select id="to"><option value="ha">Hausa</option><option value="en">English</option></select>
+</div>
+
+<div class="row">
+  <button class="btn" id="go" type="button">Start listening</button>
+  <button class="btn ghost" id="clr" type="button">Clear</button>
+  <button class="btn ghost" id="sm" type="button" aria-label="Smaller text">A&minus;</button>
+  <button class="btn ghost" id="bg" type="button" aria-label="Bigger text">A+</button>
+</div>
+<div class="status" id="st" role="status"></div>
+
+<div class="stage" id="stage" aria-live="polite"><div class="empty" id="empty">Captions will appear here.</div></div>
+<div class="live" id="live"></div>
+
+<div class="row">
+  <input type="text" id="tx" placeholder="Or type a sentence to test the translation" aria-label="Type a sentence">
+  <button class="btn" id="tb" type="button">Translate</button>
+</div>
+
+<p class="note">This test uses your browser&rsquo;s speech recognition (best in Chrome) and a free translation service. Hausa speech recognition may be missing or weak, and the free translator can make mistakes. Only record conversations when everyone taking part agrees.</p>
+</main>
+
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition,rec=null,on=false,size=1.5;
+  function lc(c){return c.split("-")[0];}
+  function st(t,e){$("st").textContent=t;$("st").className="status"+(e?" err":"");}
+
+  function addLine(text){
+    if(!text)return;
+    var e=$("empty");if(e)e.remove();
+    var d=document.createElement("div");d.className="line";
+    var o=document.createElement("div");o.className="orig";o.textContent=text;
+    var t=document.createElement("div");t.className="tr";t.textContent="\u2026";
+    d.appendChild(o);d.appendChild(t);$("stage").appendChild(d);
+    $("stage").scrollTop=$("stage").scrollHeight;
+    var from=lc($("from").value),to=$("to").value;
+    if(from===to){t.textContent=text;return;}
+    fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(text)+"&langpair="+from+"|"+to)
+      .then(function(r){return r.json();})
+      .then(function(j){
+        var s=j&&j.responseData&&j.responseData.translatedText;
+        t.textContent=s||"(no translation)";
+        if(j&&j.responseStatus&&Number(j.responseStatus)!==200)t.textContent="(translation limit reached or failed)";
+        $("stage").scrollTop=$("stage").scrollHeight;
+      })
+      .catch(function(){t.textContent="(could not translate: check your internet)";});
+  }
+
+  function startRec(){
+    if(!SR){st("This browser has no speech recognition. Use Chrome on a computer or an Android phone.",true);return;}
+    rec=new SR();rec.lang=$("from").value;rec.continuous=true;rec.interimResults=true;
+    rec.onresult=function(ev){
+      var interim="";
+      for(var i=ev.resultIndex;i<ev.results.length;i++){
+        var r=ev.results[i];
+        if(r.isFinal)addLine(r[0].transcript.trim());else interim+=r[0].transcript;
+      }
+      $("live").textContent=interim;
+    };
+    rec.onerror=function(ev){
+      var m={"not-allowed":"Microphone blocked. Allow the microphone for this page and try again.",
+             "service-not-allowed":"Microphone blocked. Allow the microphone for this page and try again.",
+             "language-not-supported":"This browser cannot recognise that language by voice. You can still type sentences to test the translation.",
+             "audio-capture":"No microphone was found.",
+             "network":"Speech recognition needs an internet connection."}[ev.error];
+      if(m){st(m,true);if(ev.error!=="network"){on=false;ui();}}
+    };
+    rec.onend=function(){if(on){try{rec.start();}catch(e){}}else ui();};
+    try{rec.start();on=true;ui();st("Listening in "+$("from").selectedOptions[0].text+". Speak now.");}
+    catch(e){st("Could not start. Try again.",true);}
+  }
+  function stopRec(){on=false;if(rec){try{rec.stop();}catch(e){}}ui();st("Stopped.");$("live").textContent="";}
+  function ui(){$("go").textContent=on?"Stop listening":"Start listening";$("go").className="btn"+(on?" rec":"");}
+
+  $("go").addEventListener("click",function(){on?stopRec():startRec();});
+  $("clr").addEventListener("click",function(){$("stage").innerHTML='<div class="empty" id="empty">Captions will appear here.</div>';$("live").textContent="";});
+  $("swap").addEventListener("click",function(){
+    var f=lc($("from").value),t=$("to").value;
+    $("from").value=t==="ha"?"ha-NG":"en-NG";$("to").value=f;
+    if(on){stopRec();}
+  });
+  $("from").addEventListener("change",function(){if(on)stopRec();});
+  $("tb").addEventListener("click",function(){var v=$("tx").value.trim();if(v){addLine(v);$("tx").value="";}});
+  $("tx").addEventListener("keydown",function(e){if(e.key==="Enter")$("tb").click();});
+  function fs(){document.documentElement.style.setProperty("--fs",size+"rem");}
+  $("bg").addEventListener("click",function(){size=Math.min(3,size+.25);fs();});
+  $("sm").addEventListener("click",function(){size=Math.max(1,size-.25);fs();});
+  if(!SR)st("Speech recognition is not available in this browser. Typing still works.",true);
+})();
+</script>
+</body>
+</html>
