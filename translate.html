@@ -70,7 +70,7 @@ label.s{font-size:.85rem;color:var(--muted)}
 <script>
 (function(){
   var $=function(i){return document.getElementById(i);};
-  var SR=window.SpeechRecognition||window.webkitSpeechRecognition,rec=null,on=false,size=1.5;
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition,rec=null,on=false,size=1.5,last="",mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   function lc(c){return c.split("-")[0];}
   function st(t,e){$("st").textContent=t;$("st").className="status"+(e?" err":"");}
 
@@ -95,14 +95,22 @@ label.s{font-size:.85rem;color:var(--muted)}
       .catch(function(){t.textContent="(could not translate: check your internet)";});
   }
 
+  function addFinal(t){
+    t=(t||"").trim();if(!t||t===last)return;
+    var out=t;
+    if(last&&t.indexOf(last)===0)out=t.slice(last.length).trim();
+    last=t;
+    if(out)addLine(out);
+  }
+
   function startRec(){
     if(!SR){st("This browser has no speech recognition. Use Chrome on a computer or an Android phone.",true);return;}
-    rec=new SR();rec.lang=$("from").value;rec.continuous=true;rec.interimResults=true;
+    rec=new SR();rec.lang=$("from").value;rec.continuous=!mobile;last="";rec.interimResults=true;
     rec.onresult=function(ev){
       var interim="";
       for(var i=ev.resultIndex;i<ev.results.length;i++){
         var r=ev.results[i];
-        if(r.isFinal)addLine(r[0].transcript.trim());else interim+=r[0].transcript;
+        if(r.isFinal)addFinal(r[0].transcript);else interim+=r[0].transcript;
       }
       $("live").textContent=interim;
     };
@@ -114,7 +122,7 @@ label.s{font-size:.85rem;color:var(--muted)}
              "network":"Speech recognition needs an internet connection."}[ev.error];
       if(m){st(m,true);if(ev.error!=="network"){on=false;ui();}}
     };
-    rec.onend=function(){if(on){try{rec.start();}catch(e){}}else ui();};
+    rec.onend=function(){last="";if(on){try{rec.start();}catch(e){}}else ui();};
     try{rec.start();on=true;ui();st("Listening in "+$("from").selectedOptions[0].text+". Speak now.");}
     catch(e){st("Could not start. Try again.",true);}
   }
