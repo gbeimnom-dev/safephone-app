@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Translated call (test)</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f3f6fb;--surface:#fff;--text:#12202f;--muted:#5b6b7c;--line:#dde5ee;--pri:#1a56db;--pri-t:#fff;--soft:#e6eefc;--bad:#c0392b;--ok:#137a4b;--fs:1.5rem;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1621;--surface:#162231;--text:#e8eff7;--muted:#9fb0c2;--line:#263a4f;--pri:#6ea0ff;--pri-t:#0b1a33;--soft:#1e3350;--bad:#ff8a7a;--ok:#5fd39b;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+main{max-width:820px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:1.4rem;margin:6px 0 4px}
+.sub{color:var(--muted);margin:0 0 12px;font-size:.95rem}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+[hidden]{display:none!important}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+select,input[type=text],input[type=email],input[type=password]{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-width:0}
+input[type=text],input[type=email],input[type=password]{flex:1 1 200px}
+.btn{background:var(--pri);color:var(--pri-t);border:0;border-radius:999px;padding:10px 20px;font-weight:600;cursor:pointer}
+.btn.ghost{background:var(--soft);color:var(--pri)}
+.btn.end{background:var(--bad);color:#fff}
+.btn:disabled{opacity:.55;cursor:default}
+.status{min-height:1.4em;font-size:.92rem;color:var(--muted)}
+.status.err{color:var(--bad)}
+.code{font:700 1.8rem/1 ui-monospace,Consolas,monospace;letter-spacing:.2em;background:var(--soft);color:var(--pri);padding:8px 14px;border-radius:10px}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;height:42vh;min-height:240px;overflow-y:auto;scroll-behavior:smooth}
+.line{margin:0 0 16px;opacity:.5}
+.line:last-of-type{opacity:1}
+.who{font-size:.8rem;font-weight:700;color:var(--pri);text-transform:uppercase;letter-spacing:.05em}
+.who.me{color:var(--muted)}
+.orig{color:var(--muted);font-size:.92rem}
+.tr{font-size:var(--fs);font-weight:700;line-height:1.3}
+.tr.mine{font-size:1.05rem;font-weight:500;color:var(--muted)}
+.live{color:var(--muted);font-style:italic;min-height:1.4em}
+.note{font-size:.88rem;color:var(--muted)}
+label.chk{display:flex;gap:10px;align-items:flex-start;font-size:.92rem}
+label.chk input{margin-top:4px}
+a{color:var(--pri)}
+</style>
+</head>
+<body>
+<main>
+<h1>Translated call (test)</h1>
+<p class="sub">Talk to another person over the internet and read what they say, translated, like lyrics under the call. Test version.</p>
+
+<section class="card" id="auth">
+  <p class="sub">Sign in with your SafePhone Backup account.</p>
+  <div class="row"><input type="email" id="em" placeholder="Email" autocomplete="email" aria-label="Email"><input type="password" id="pw" placeholder="Password" autocomplete="current-password" aria-label="Password"></div>
+  <div class="row"><button class="btn" id="si" type="button">Sign in</button></div>
+  <div class="status" id="ae" role="alert"></div>
+  <p class="note">No account yet? Create one at <a href="/">SafePhone Backup</a> first.</p>
+</section>
+
+<section id="app" hidden>
+  <div class="row" style="justify-content:space-between"><span class="note" id="who"></span><button class="btn ghost" id="so" type="button">Sign out</button></div>
+
+  <div class="card" id="setup">
+    <div class="row">
+      <label for="from">I speak</label>
+      <select id="from"><option value="en-NG">English (Nigeria)</option><option value="en-US">English (US)</option><option value="ha-NG">Hausa</option></select>
+      <label for="to">Show me in</label>
+      <select id="to"><option value="en">English</option><option value="ha">Hausa</option></select>
+    </div>
+    <label class="chk"><input type="checkbox" id="ok"><span>Everyone on this call agrees that their speech is turned into text and translated.</span></label>
+    <div class="row">
+      <button class="btn" id="start" type="button">Start a call</button>
+      <input type="text" id="jc" placeholder="Code to join" maxlength="6" aria-label="Call code" style="text-transform:uppercase">
+      <button class="btn ghost" id="join" type="button">Join</button>
+    </div>
+  </div>
+
+  <div class="card" id="live" hidden>
+    <div class="row"><span class="note">Call code</span><span class="code" id="code"></span></div>
+    <div class="row"><button class="btn ghost" id="mute" type="button">Mute</button><button class="btn end" id="hang" type="button">Hang up</button></div>
+  </div>
+
+  <div class="status" id="st" role="status"></div>
+  <div class="stage" id="stage" aria-live="polite"><div class="note" id="empty">Captions will appear here during the call.</div></div>
+  <div class="live" id="interim"></div>
+  <audio id="remote" autoplay playsinline></audio>
+
+  <p class="note" style="margin-top:14px">Use headphones, so the speaker does not feed back into your microphone. This test uses free tools, so translations can be wrong and slow, and the call may fail on some mobile networks.</p>
+</section>
+</main>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,updateDoc,onSnapshot,collection,addDoc,query,orderBy} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app=initializeApp({apiKey:"AIzaSyCha6I2Cs-oaueNqlU2iQMTciBJjt0AIFI",authDomain:"safephone-backup.firebaseapp.com",projectId:"safephone-backup"});
+const auth=getAuth(app),db=getFirestore(app);
+
+/* STUN helps two phones find each other. Calls across some mobile networks also need a TURN server:
+   add one here, for example {urls:"turn:YOUR_TURN_HOST:3478",username:"USER",credential:"PASSWORD"} */
+const ICE={iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}]};
+
+const $=id=>document.getElementById(id);
+const sid=Math.random().toString(36).slice(2,10);
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let user=null,pc=null,local=null,room=null,unsubs=[],pending=[],rec=null,on=false,last="";
+
+const lc=c=>c.split("-")[0];
+function st(t,e){$("st").textContent=t;$("st").className="status"+(e?" err":"");}
+function code6(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r=crypto.getRandomValues(new Uint8Array(6));return Array.from(r,x=>a[x%a.length]).join("");}
+
+/* ---------- sign in ---------- */
+$("si").addEventListener("click",async()=>{
+  $("ae").textContent="";
+  try{await signInWithEmailAndPassword(auth,$("em").value.trim().toLowerCase(),$("pw").value);$("pw").value="";}
+  catch(e){$("ae").textContent="Email or password is not right.";}
+});
+$("so").addEventListener("click",()=>{hang(true);signOut(auth);});
+onAuthStateChanged(auth,u=>{
+  user=u;$("auth").hidden=!!u;$("app").hidden=!u;
+  if(u)$("who").textContent="Signed in as "+u.email;
+});
+
+/* ---------- call ---------- */
+async function getMic(){
+  local=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:false});
+}
+function makePc(){
+  pc=new RTCPeerConnection(ICE);pending=[];
+  local.getTracks().forEach(t=>pc.addTrack(t,local));
+  pc.ontrack=e=>{$("remote").srcObject=e.streams[0];$("remote").play().catch(()=>{});};
+  pc.onconnectionstatechange=()=>{
+    const s=pc.connectionState;
+    if(s==="connected")st("Connected. Speak, and read the captions.");
+    else if(s==="failed")st("The call could not connect. Both phones may need a TURN server.",true);
+    else if(s==="disconnected")st("Connection lost.",true);
+  };
+}
+function addCand(c){
+  if(pc&&pc.remoteDescription)pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
+  else pending.push(c);
+}
+function flush(){pending.splice(0).forEach(c=>pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{}));}
+function needConsent(){if(!$("ok").checked){st("Please tick the box to confirm that everyone agrees.",true);return true;}return false;}
+
+async function startCall(){
+  if(needConsent())return;
+  try{
+    await getMic();makePc();
+    const code=code6();room=doc(db,"rooms",code);
+    const callerC=collection(room,"callerCandidates"),calleeC=collection(room,"calleeCandidates");
+    pc.onicecandidate=e=>{if(e.candidate)addDoc(callerC,e.candidate.toJSON());};
+    const offer=await pc.createOffer();await pc.setLocalDescription(offer);
+    await setDoc(room,{offer:{type:offer.type,sdp:offer.sdp},by:user.uid,at:Date.now()});
+    unsubs.push(onSnapshot(room,async s=>{
+      const d=s.data();if(!d)return;
+      if(d.ended){hang(false);st("The other person ended the call.");return;}
+      if(d.answer&&!pc.currentRemoteDescription){await pc.setRemoteDescription(new RTCSessionDescription(d.answer));flush();}
+    }));
+    unsubs.push(onSnapshot(calleeC,s=>s.docChanges().forEach(c=>{if(c.type==="added")addCand(c.doc.data());})));
+    begin(code);st("Waiting for the other person. Give them the code.");
+  }catch(e){fail(e);}
+}
+async function joinCall(){
+  if(needConsent())return;
+  const code=$("jc").value.trim().toUpperCase();
+  if(code.length!==6){st("Type the 6-character code.",true);return;}
+  try{
+    room=doc(db,"rooms",code);
+    const snap=await getDoc(room);
+    if(!snap.exists()){st("No call with that code.",true);room=null;return;}
+    const d=snap.data();
+    if(d.answer||d.ended){st("That call is already in use or has ended.",true);room=null;return;}
+    await getMic();makePc();
+    const callerC=collection(room,"callerCandidates"),calleeC=collection(room,"calleeCandidates");
+    pc.onicecandidate=e=>{if(e.candidate)addDoc(calleeC,e.candidate.toJSON());};
+    await pc.setRemoteDescription(new RTCSessionDescription(d.offer));flush();
+    const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+    await updateDoc(room,{answer:{type:ans.type,sdp:ans.sdp},joinedBy:user.uid});
+    unsubs.push(onSnapshot(callerC,s=>s.docChanges().forEach(c=>{if(c.type==="added")addCand(c.doc.data());})));
+    unsubs.push(onSnapshot(room,s=>{const x=s.data();if(x&&x.ended){hang(false);st("The other person ended the call.");}}));
+    begin(code);st("Connecting\u2026");
+  }catch(e){fail(e);}
+}
+function fail(e){
+  const m=e&&e.name==="NotAllowedError"?"Microphone blocked. Allow the microphone and try again.":
+          e&&e.code==="permission-denied"?"Not allowed by the database rules. Publish the rules for calls first.":
+          "Something went wrong: "+(e&&e.message?e.message:e);
+  st(m,true);hang(false);
+}
+function begin(code){
+  $("code").textContent=code;$("live").hidden=false;$("setup").hidden=true;
+  $("stage").innerHTML="";
+  unsubs.push(onSnapshot(query(collection(room,"lines"),orderBy("ts")),s=>
+    s.docChanges().forEach(c=>{if(c.type==="added")showLine(c.doc.data());})));
+  startRec();
+}
+function hang(notify){
+  on=false;if(rec){try{rec.stop();}catch(e){}}
+  unsubs.forEach(f=>f());unsubs=[];
+  if(notify&&room)updateDoc(room,{ended:true}).catch(()=>{});
+  if(pc){pc.close();pc=null;}
+  if(local){local.getTracks().forEach(t=>t.stop());local=null;}
+  room=null;$("live").hidden=true;$("setup").hidden=false;$("interim").textContent="";
+}
+$("start").addEventListener("click",startCall);
+$("join").addEventListener("click",joinCall);
+$("hang").addEventListener("click",()=>{hang(true);st("Call ended.");});
+$("mute").addEventListener("click",()=>{
+  if(!local)return;const t=local.getAudioTracks()[0];t.enabled=!t.enabled;
+  $("mute").textContent=t.enabled?"Mute":"Unmute";
+});
+
+/* ---------- captions: my speech out, their speech in ---------- */
+function startRec(){
+  if(!SR){st("This browser has no speech recognition, so you will hear the call but not send captions. Use Chrome.",true);return;}
+  rec=new SR();rec.lang=$("from").value;rec.continuous=!mobile;rec.interimResults=true;last="";
+  rec.onresult=ev=>{
+    let interim="";
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const r=ev.results[i];
+      if(r.isFinal)send(r[0].transcript);else interim+=r[0].transcript;
+    }
+    $("interim").textContent=interim;
+  };
+  rec.onerror=ev=>{
+    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"||ev.error==="language-not-supported"){
+      st("Captions stopped: "+ev.error+". The call audio can continue.",true);on=false;
+    }
+  };
+  rec.onend=()=>{last="";if(on){try{rec.start();}catch(e){}}};
+  on=true;try{rec.start();}catch(e){}
+}
+function send(t){
+  t=(t||"").trim();if(!t||t===last||!room)return;
+  let out=t;if(last&&t.indexOf(last)===0)out=t.slice(last.length).trim();
+  last=t;if(!out)return;
+  addDoc(collection(room,"lines"),{sid:sid,text:out,lang:$("from").value,ts:Date.now()}).catch(()=>{});
+}
+function showLine(d){
+  const e=$("empty");if(e)e.remove();
+  const mine=d.sid===sid,line=document.createElement("div");line.className="line";
+  const w=document.createElement("div");w.className="who"+(mine?" me":"");w.textContent=mine?"You":"They";
+  const o=document.createElement("div");o.className="orig";
+  const t=document.createElement("div");t.className="tr"+(mine?" mine":"");
+  line.appendChild(w);
+  if(mine){t.textContent=d.text;line.appendChild(t);}
+  else{
+    o.textContent=d.text;t.textContent="\u2026";line.appendChild(o);line.appendChild(t);
+    const from=lc(d.lang),to=$("to").value;
+    if(from===to)t.textContent=d.text;
+    else fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(d.text)+"&langpair="+from+"|"+to)
+      .then(r=>r.json()).then(j=>{t.textContent=(j&&j.responseData&&j.responseData.translatedText)||"(no translation)";$("stage").scrollTop=$("stage").scrollHeight;})
+      .catch(()=>{t.textContent="(could not translate)";});
+  }
+  $("stage").appendChild(line);$("stage").scrollTop=$("stage").scrollHeight;
+}
+</script>
+</body>
+</html>
