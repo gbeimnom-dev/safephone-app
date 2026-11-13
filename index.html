@@ -5,14 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SafePhone Backup | Back up contacts and call history online</title>
 <meta name="google-site-verification" content="sA6sO36PJBCDyRL0cIWxsK3Gtkmr9k-EdxUBXDkyGF8" />
+<meta name="google-site-verification" content="Y4vP7iz_wee8E_nfYYnGcjDfEZfPROZ3TCCMe132Vmo" />
+<link rel="canonical" href="https://safephone-app.gbeimnom.workers.dev/">
+<meta property="og:url" content="https://safephone-app.gbeimnom.workers.dev/">
 <meta name="description" content="Back up your contacts and call history, and see them from any browser.">
+<meta name="theme-color" content="#0f766e">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:title" content="SafePhone Backup">
+<meta property="og:description" content="Save your contacts and call history. Open them from any phone or browser.">
+<meta property="og:image" content="https://safephone-app.gbeimnom.workers.dev/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 :root{
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
-  --bg:#f3f6fb;--surface:#fff;--text:#12202f;--muted:#5b6b7c;--line:#dde5ee;--pri:#1a56db;--pri-t:#fff;--soft:#e6eefc;--ok:#137a4b;--bad:#c0392b;color-scheme:light;
+  --bg:#f2f7f6;--surface:#fff;--text:#0f2623;--muted:#4f6762;--line:#d5e4e0;--pri:#0f766e;--pri-t:#fff;--soft:#dff3ef;--ok:#15803d;--bad:#b42318;color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1621;--surface:#162231;--text:#e8eff7;--muted:#9fb0c2;--line:#263a4f;--pri:#6ea0ff;--pri-t:#0b1a33;--soft:#1e3350;--ok:#5fd39b;--bad:#ff8a7a;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0e1621;--surface:#162231;--text:#e8eff7;--muted:#9fb0c2;--line:#263a4f;--pri:#6ea0ff;--pri-t:#0b1a33;--soft:#1e3350;--ok:#5fd39b;--bad:#ff8a7a;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1a19;--surface:#112826;--text:#e6f4f1;--muted:#93b5ae;--line:#21423e;--pri:#2dd4bf;--pri-t:#04201d;--soft:#173633;--ok:#5fd39b;--bad:#ff8a7a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0a1a19;--surface:#112826;--text:#e6f4f1;--muted:#93b5ae;--line:#21423e;--pri:#2dd4bf;--pri-t:#04201d;--soft:#173633;--ok:#5fd39b;--bad:#ff8a7a;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
@@ -70,13 +81,38 @@ h2{font-size:1.25rem;margin:0 0 12px}
 .add input{flex:1 1 150px}
 .steps{margin:0;padding-left:20px;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:600;z-index:9}
+
+/* refreshed look */
+nav a.navcall{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;font-weight:600;color:#fff;background:#16a34a;text-decoration:none;white-space:nowrap}
+.callcard{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:18px 20px;margin-top:14px}
+.callico{width:52px;height:52px;border-radius:16px;background:#16a34a;color:#fff;display:grid;place-items:center;flex:none}
+.callcard a.btn{text-decoration:none;display:inline-block;background:#16a34a;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.3)}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;letter-spacing:.005em}
+.card{border-radius:22px;box-shadow:0 1px 2px rgba(15,38,35,.06),0 10px 28px rgba(15,38,35,.06)}
+.btn{box-shadow:0 2px 8px rgba(15,118,110,.22)}
+.btn.ghost{box-shadow:none}
+#auth{background:linear-gradient(160deg,var(--soft),var(--bg) 58%)}
+.mark{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,#14b8a6,#0b4f4a);color:#fff}
+nav button[aria-current="page"]{background:var(--pri);color:var(--pri-t)}
+.hero{background:linear-gradient(135deg,#0f766e,#0a3f3b);color:#fff;border:0}
+.hero h2,.hero .sub,.hero .stat{color:#fff}
+.hero .sub{opacity:.88}
+.hero .chip{background:rgba(255,255,255,.2);color:#fff}
+.hero .chip.ok{color:#bbf7d0}
+.hero .ring{background:conic-gradient(#fff calc(var(--p)*1%),rgba(255,255,255,.25) 0)}
+.hero .ring i{background:#0d5a54;color:#fff}
+.hero .bar{background:rgba(255,255,255,.25)}
+.hero .bar b{background:#fff}
+.hero .btn{background:#fff;color:#0a3f3b;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.stat b{color:var(--pri)}
+.av{box-shadow:0 1px 3px rgba(0,0,0,.2)}
 </style>
 </head>
 <body>
 
 <div id="auth">
   <div class="card">
-    <div class="logo"><span class="mark">&#9729;</span>SafePhone Backup</div>
+    <div class="logo"><span class="mark"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5a4.5 4.5 0 0 1-.5 8.5z"/><path d="M9.5 13.5l2 2 3.5-4"/></svg></span>SafePhone Backup</div>
     <h1 id="aH">Welcome back</h1>
     <p class="sub" id="aS">Sign in to see your saved contacts and calls.</p>
     <label for="em">Email</label><input id="em" type="email" autocomplete="email" placeholder="you@example.com">
@@ -94,7 +130,7 @@ h2{font-size:1.25rem;margin:0 0 12px}
 <div id="app" hidden>
 <div class="wrap">
   <header class="top">
-    <div class="logo"><span class="mark">&#9729;</span>SafePhone</div>
+    <div class="logo"><span class="mark"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5a4.5 4.5 0 0 1-.5 8.5z"/><path d="M9.5 13.5l2 2 3.5-4"/></svg></span>SafePhone</div>
     <div class="who"><span id="whoE"></span><button class="btn ghost" id="out" type="button">Sign out</button></div>
   </header>
   <nav id="nav" aria-label="Sections">
@@ -102,6 +138,7 @@ h2{font-size:1.25rem;margin:0 0 12px}
     <button data-v="contacts">Contacts</button>
     <button data-v="calls">Call history</button>
     <button data-v="settings">Settings</button>
+    <a class="navcall" href="call.html"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</a>
   </nav>
 
   <section id="v-home">
@@ -121,7 +158,12 @@ h2{font-size:1.25rem;margin:0 0 12px}
       <div class="card stat"><b id="nS">0 KB</b><span>Storage used</span></div>
       <div class="card stat"><b id="nL" style="font-size:1.1rem;padding:6px 0">Never</b><span>Last backup</span></div>
     </div>
-    <div class="card" style="padding:20px">
+    <div class="card callcard">
+      <span class="callico"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+      <div style="flex:1;min-width:200px"><h2 style="margin:0 0 2px">Translated call</h2><p class="sub" style="margin:0">Call a friend over the internet and read their words in English or Hausa as captions.</p></div>
+      <a class="btn" href="call.html">Start a call</a>
+    </div>
+    <div class="card" style="padding:20px;margin-top:14px">
       <h2>If your phone is lost</h2>
       <ol class="steps"><li>Open this site on any phone or computer.</li><li>Sign in with your email and password.</li><li>Open Contacts and Call history to see everything you saved.</li><li>Sign out when you finish.</li></ol>
     </div>
