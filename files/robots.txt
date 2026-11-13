@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://safephone-app.gbeimnom.workers.dev/sitemap.xml
